@@ -200,8 +200,15 @@ audioFileInput.addEventListener('change', () => {
   }
 
   const objectUrl = URL.createObjectURL(file);
-  player.src = objectUrl;
-  player.dataset.objectUrl = objectUrl;
+  const parsedObjectUrl = new URL(objectUrl);
+  if (parsedObjectUrl.protocol !== 'blob:') {
+    URL.revokeObjectURL(objectUrl);
+    setStatus('加载失败：仅允许本地 blob 音频源');
+    return;
+  }
+
+  player.src = parsedObjectUrl.href;
+  player.dataset.objectUrl = parsedObjectUrl.href;
   setStatus(`已加载：${file.name}`);
 });
 
