@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RotarySound</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <h1>RotarySound</h1>
+      <p class="desc">便携式旋转音频控制器：控制全局音量上下限与旋转动态曲线。</p>
+
+      <section class="panel">
+        <h2>全局音量边界</h2>
+        <div class="row">
+          <label for="minVolume">最小音量百分比</label>
+          <input id="minVolume" type="range" min="0" max="100" value="20" />
+          <output id="minVolumeValue" for="minVolume">20%</output>
+        </div>
+        <div class="row">
+          <label for="maxVolume">最大音量百分比</label>
+          <input id="maxVolume" type="range" min="0" max="100" value="90" />
+          <output id="maxVolumeValue" for="maxVolume">90%</output>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>旋转速度节奏曲线</h2>
+        <p class="hint">拖动曲线点（越高越快）</p>
+        <canvas id="speedCurve" width="640" height="180" aria-label="旋转速度节奏曲线"></canvas>
+      </section>
+
+      <section class="panel">
+        <h2>旋转音量变化幅度曲线</h2>
+        <p class="hint">拖动曲线点（越高幅度越大）</p>
+        <canvas id="amplitudeCurve" width="640" height="180" aria-label="旋转音量变化幅度曲线"></canvas>
+      </section>
+
+      <section class="panel">
+        <h2>音频源</h2>
+        <div class="row">
+          <label for="audioFile">选择本地音频文件</label>
+          <input id="audioFile" type="file" accept="audio/*" />
+        </div>
+        <audio id="player" controls></audio>
+        <div class="actions">
+          <button id="startBtn" type="button">开始旋转处理</button>
+          <button id="stopBtn" type="button" disabled>停止旋转处理</button>
+        </div>
+        <p id="status" class="status">状态：未启动</p>
+      </section>
+    </main>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
