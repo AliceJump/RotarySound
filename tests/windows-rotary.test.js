@@ -13,5 +13,7 @@ test('windows rotary state produces bounded volume percentage', () => {
     const snapshot = stepWindowsRotaryState(state, 0.1);
     assert.ok(snapshot.volumePercent >= 10);
     assert.ok(snapshot.volumePercent <= 80);
+    assert.ok(snapshot.pan >= -1);
+    assert.ok(snapshot.pan <= 1);
   }
 });

@@ -1,6 +1,7 @@
 import {
   computeAngularVelocity,
   computeGain,
+  computePan,
   sampleCurve,
 } from './engine.js';
 
@@ -55,10 +56,12 @@ export function stepWindowsRotaryState(state, dtSeconds) {
     amplitudeSample: amplitudeDrivenSample,
     baseVolume: 1,
   });
+  const pan = computePan(state.angle, amplitudeSample);
 
   return {
     gain,
     volumePercent: gain * 100,
+    pan,
     speedSample,
     amplitudeSample,
   };

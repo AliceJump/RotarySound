@@ -4,7 +4,7 @@ import {
   createWindowsRotaryState,
   stepWindowsRotaryState,
 } from './src/windows-rotary.js';
-import { setMasterVolumePercent } from './src/windows-audio.js';
+import { setEndpointState } from './src/windows-audio.js';
 
 function parseArgs(argv) {
   const options = {
@@ -54,26 +54,39 @@ async function main() {
     ? options.intervalMs
     : 120;
 
-  console.log('RotarySound Windows global volume controller started. Press Ctrl+C to stop.');
+  console.log('RotarySound Windows global volume+pan controller started. Press Ctrl+C to stop.');
 
   let stopped = false;
+  let lastVolumePercent = options.max;
+  let inFlight = false;
   const stop = () => {
     if (stopped) return;
     stopped = true;
     clearInterval(timer);
-    console.log('\nStopped.');
-    process.exit(0);
+    setEndpointState({ volumePercent: lastVolumePercent, pan: 0 })
+      .catch(() => {})
+      .finally(() => {
+        console.log('\nStopped.');
+        process.exit(0);
+      });
   };
 
   process.on('SIGINT', stop);
   process.on('SIGTERM', stop);
 
   const timer = setInterval(() => {
+    if (inFlight) return;
+    inFlight = true;
     const snapshot = stepWindowsRotaryState(state, intervalMs / 1000);
-    setMasterVolumePercent(snapshot.volumePercent).catch((error) => {
-      console.error('Failed to set global master volume:', error.message);
-      stop();
-    });
+    lastVolumePercent = snapshot.volumePercent;
+    setEndpointState({ volumePercent: snapshot.volumePercent, pan: snapshot.pan })
+      .catch((error) => {
+        console.error('Failed to set global endpoint state:', error.message);
+        stop();
+      })
+      .finally(() => {
+        inFlight = false;
+      });
   }, intervalMs);
 }
 
