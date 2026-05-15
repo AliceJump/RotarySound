@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 
 import {
+  createWindowsRandomState,
   createWindowsRotaryState,
+  stepWindowsRandomState,
   stepWindowsRotaryState,
 } from './src/windows-rotary.js';
 import { setEndpointState } from './src/windows-audio.js';
@@ -11,8 +13,11 @@ function parseArgs(argv) {
     min: 20,
     max: 90,
     intervalMs: 120,
+    mode: 'rotary',
     phaseAdvance: 0.15,
     baseVelocity: Math.PI * 1.5,
+    randomMinTransition: 0.8,
+    randomMaxTransition: 2.4,
   };
 
   for (let i = 0; i < argv.length; i += 1) {
@@ -34,6 +39,15 @@ function parseArgs(argv) {
     } else if (token === '--base-velocity' && next !== undefined) {
       options.baseVelocity = Number(next);
       i += 1;
+    } else if (token === '--mode' && next !== undefined) {
+      options.mode = String(next);
+      i += 1;
+    } else if (token === '--random-min-transition' && next !== undefined) {
+      options.randomMinTransition = Number(next);
+      i += 1;
+    } else if (token === '--random-max-transition' && next !== undefined) {
+      options.randomMaxTransition = Number(next);
+      i += 1;
     }
   }
 
@@ -42,19 +56,28 @@ function parseArgs(argv) {
 
 async function main() {
   const options = parseArgs(process.argv.slice(2));
+  const mode = options.mode === 'random' ? 'random' : 'rotary';
 
-  const state = createWindowsRotaryState({
+  const baseStateOptions = {
     minPercent: options.min,
     maxPercent: options.max,
     baseVelocity: Number.isFinite(options.baseVelocity) ? options.baseVelocity : Math.PI * 1.5,
     phaseAdvance: Number.isFinite(options.phaseAdvance) ? options.phaseAdvance : 0.15,
-  });
+  };
+  const state = mode === 'random'
+    ? createWindowsRandomState({
+      ...baseStateOptions,
+      minTransitionSeconds: options.randomMinTransition,
+      maxTransitionSeconds: options.randomMaxTransition,
+    })
+    : createWindowsRotaryState(baseStateOptions);
+  const stepState = mode === 'random' ? stepWindowsRandomState : stepWindowsRotaryState;
 
   const intervalMs = Number.isFinite(options.intervalMs) && options.intervalMs >= 16
     ? options.intervalMs
     : 120;
 
-  console.log('RotarySound Windows global volume+pan controller started. Press Ctrl+C to stop.');
+  console.log(`RotarySound Windows global volume+pan controller started (mode=${mode}). Press Ctrl+C to stop.`);
 
   let stopped = false;
   let lastVolumePercent = options.max;
@@ -77,7 +100,7 @@ async function main() {
   const timer = setInterval(() => {
     if (inFlight) return;
     inFlight = true;
-    const snapshot = stepWindowsRotaryState(state, intervalMs / 1000);
+    const snapshot = stepState(state, intervalMs / 1000);
     lastVolumePercent = snapshot.volumePercent;
     setEndpointState({ volumePercent: snapshot.volumePercent, pan: snapshot.pan })
       .catch((error) => {
